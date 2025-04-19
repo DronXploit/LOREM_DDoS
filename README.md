@@ -166,7 +166,8 @@ sudo python3 main.py --scan 192.168.1.1
 - Ubuntu 22.04 LTS  
 - Windows 11 WSL2  
 - macOS Ventura 13.4  
-- Termux v0.118 (Android 13)  
+- Termux v0.118 (Android 13)
+- Kali Linux
 
 
 **SUPPORT ME BY**:    
