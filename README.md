@@ -83,6 +83,11 @@ Tool ini secara cerdas menyesuaikan diri:
    python3 main.py --diagnose
 
    ```
+sebelum (main.py) selalu update proxy dengan cara:
+
+python3 proxy_scraper.py
+
+untuk generate proxies.txt, baik nya tiap serangan update proxy karena ini hanya scrap free proxy
 
 Penggunaan perintah untuk menjalankan tool ini: **`sudo python3`** vs **`python3`**:
 
