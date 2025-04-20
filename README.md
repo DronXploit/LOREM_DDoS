@@ -1,4 +1,4 @@
-# 🛠️ LOREM_DDoS
+# 🛠️ LOREM_DDoS_V3
 
 ![Banner Jaringan](https://example.com/banner-jaringan.jpg) <!-- Ganti dengan banner Anda -->
 
@@ -184,8 +184,9 @@ sudo python3 main.py
 
 **SUPPORT ME BY**:    
 [![SAWER ME!](https://saweria.co/dronxploit)]
+
 **FOLLOW ME ON**:    
 [![FOLLOW ME!](https://instagram.com/dronxploit)]
 
-**Contriubtor**
+**Contributor**
 [![CONTRIBUTOR](https://github.com/palacita135)]
