@@ -83,13 +83,6 @@ Tool ini secara cerdas menyesuaikan diri:
    python3 main.py --diagnose
 
    ```
-sebelum (main.py) selalu update proxy dengan cara:
-
-python3 proxy_scraper.py
-
-untuk generate proxies.txt, baik nya tiap serangan update proxy karena ini hanya scrap free proxy
-
-Penggunaan perintah untuk menjalankan tool ini: **`sudo python3`** vs **`python3`**:
 
 ---
 
@@ -114,15 +107,29 @@ Penggunaan perintah untuk menjalankan tool ini: **`sudo python3`** vs **`python3
 
 ---
 
-### **🖥️ Contoh Nyata**
+### **🖥️ Cara Mengoperasikan **
 ```bash
-# Scan port SSH (22) tanpa sudo:
-python3 main.py --scan 192.168.1.1
-# Hasil: "[-] Port 22: Tidak bisa dibuka (Permission denied)"
+# disarankan memakai environtment python dengan cara
+python3 -m venv venv
+source venv/bin/activate
 
-# Dengan sudo:
-sudo python3 main.py --scan 192.168.1.1
-# Hasil: "[+] Port 22: TERBUKA (SSH)"
+# Install persyaratan
+pip install -r requirements.txt
+
+# Update proxy:
+python3 proxy_scraper.py
+
+```
+### Dua cara mengoperasikan tool ini:
+Jalankan tanpa akses root
+```bash
+# Tanpa akses root
+python3 main.py
+```
+Atau jalankan dengan akses root
+```bash
+# Akses root
+sudo python3 main.py
 ```
 
 ---
@@ -179,3 +186,6 @@ sudo python3 main.py --scan 192.168.1.1
 [![SAWER ME!](https://saweria.co/dronxploit)]
 **FOLLOW ME ON**:    
 [![FOLLOW ME!](https://instagram.com/dronxploit)]
+
+**Contriubtor**
+[![CONTRIBUTOR](https://github.com/palacita135)]
