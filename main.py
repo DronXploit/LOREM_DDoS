@@ -3,11 +3,17 @@ import argparse
 import asyncio
 import sys
 import signal
+import time
+from urllib.parse import urlparse
 from datetime import datetime
-from ddos_attacker import DDoSAttacker
 from scanner import PortScanner
 from packet_sniffer import PacketSniffer
 from api_checker import APIChecker
+from ddos_attacker import AdvancedDDoSAttacker
+
+def sanitize_host_input(raw_input):
+    parsed = urlparse(raw_input if "://" in raw_input else f"http://{raw_input}")
+    return parsed.hostname
 
 class Colors:
     RED = '\033[91m'
@@ -39,14 +45,15 @@ class AdvancedNetworkTool:
     ██║     ██║   ██║██╔══██╗██╔══╝  ██║╚██╔╝██║
     ███████╗╚██████╔╝██║  ██║███████╗██║ ╚═╝ ██║
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝
-    ██████╗ ██████╗  ██████╗ ███████╗           
-    ██╔══██╗██╔══██╗██╔═══██╗██╔════╝           
-    ██║  ██║██║  ██║██║   ██║███████╗           
-    ██║  ██║██║  ██║██║   ██║╚════██║           
-    ██████╔╝██████╔╝╚██████╔╝███████║          
-    ╚═════╝ ╚═════╝  ╚═════╝ ╚══════╝  VERSION: 2.0            
+                ██████╗ ██████╗  ██████╗ ███████╗           
+                ██╔══██╗██╔══██╗██╔═══██╗██╔════╝           
+                ██║  ██║██║  ██║██║   ██║███████╗           
+                ██║  ██║██║  ██║██║   ██║╚════██║           
+                ██████╔╝██████╔╝╚██████╔╝███████║          
+                ╚═════╝ ╚═════╝  ╚═════╝ ╚══════╝  VERSION: 3.0            
     ===========================================================
       Author              : dronXploit
+      Contributor         : palacita135
       Visit me only on    : https://instagram.com/dronxploit
       Sawer me by         : https://saweria.co/dronxploit
     -----------------------------------------------------------
@@ -60,7 +67,7 @@ class AdvancedNetworkTool:
         while True:
             target = input(Colors.colorize(prompt, Colors.BOLD + Colors.WHITE)).strip()
             if target:
-                return target
+                return sanitize_host_input(target)
             print(Colors.colorize("[!] Input tidak boleh kosong", Colors.RED))
 
     def main_menu(self):
@@ -89,15 +96,91 @@ class AdvancedNetworkTool:
         else:
             return None
 
-    def get_thread_count(self):
+    def get_thread_count(self) -> int:
         while True:
             try:
                 threads = int(input(Colors.colorize("Jumlah threads (50-1000): ", Colors.BOLD)).strip())
-                if 50 <= threads <= 1000:
+                if 50 <= threads <= 10000:
                     return threads
                 print(Colors.colorize("[!] Masukkan angka antara 50-1000", Colors.RED))
             except ValueError:
                 print(Colors.colorize("[!] Input harus angka", Colors.RED))
+    
+    def get_duration(self) -> int:
+        while True:
+            try:
+                duration = int(input(Colors.colorize("Duration (seconds): ", Colors.BOLD)).strip())
+                if duration > 0:
+                    return duration
+                print(Colors.colorize("[!] Duration harus lebih dari 0", Colors.RED))
+            except ValueError:
+                print(Colors.colorize("[!] Input harus angka", Colors.RED))
+
+    def _confirm_attack(self):
+        """Get user confirmation before attack"""
+        confirm = input(Colors.colorize("Apakah Anda yakin ingin melanjutkan serangan? (y/n): ", Colors.BOLD)).strip().lower()
+        return confirm == 'y'
+    
+    def _select_port(self, open_ports: list) -> int:
+        """Port selection logic"""
+        while True:
+            try:
+                choice = input(Colors.colorize("Select port to attack (number): ", Colors.BOLD))
+                idx = int(choice) - 1
+                if 0 <= idx < len(open_ports):
+                    return open_ports[idx]
+                print(Colors.colorize("[!] Invalid number", Colors.RED))
+            except ValueError:
+                print(Colors.colorize("[!] Must be a number", Colors.RED))
+
+    def _get_duration(self) -> int:
+        """Get duration from user"""
+        while True:
+            try:
+                duration = int(input(Colors.colorize("Durasi (detik): ", Colors.BOLD)).strip())
+                if duration > 0:
+                    return duration
+                print(Colors.colorize("[!] Durasi harus lebih dari 0", Colors.RED))
+            except ValueError:
+                print(Colors.colorize("[!] Input harus angka", Colors.RED))
+
+    def _get_thread_count(self) -> int:
+        """Get number of threads from user"""
+        while True:
+            try:
+                threads = int(input(Colors.colorize("Jumlah threads (50-1000): ", Colors.BOLD)).strip())
+                if 50 <= threads <= 10000:
+                    return threads
+                print(Colors.colorize("[!] Masukkan angka antara 50-1000", Colors.RED))
+            except ValueError:
+                print(Colors.colorize("[!] Input harus angka", Colors.RED))
+
+    def _show_attack_results(self, stats: dict):
+        """Display final attack statistics"""
+        print(Colors.colorize("\n[+] ATTACK COMPLETED", Colors.BOLD + Colors.GREEN))
+        print(Colors.colorize(f"Duration: {stats['duration']}", Colors.CYAN))
+        print(Colors.colorize(f"Total Requests: {stats['total_requests']:,}", Colors.CYAN))
+        print(Colors.colorize(f"Successful: {stats['success_requests']:,}", Colors.GREEN))
+        print(Colors.colorize(f"Failed: {stats['failed_requests']:,}", Colors.RED))
+        print(Colors.colorize(f"Requests/sec: {stats['requests_per_sec']:,.1f}", Colors.CYAN))
+        print(Colors.colorize(f"Bandwidth Used: {stats['bandwidth_mb']:.2f} MB", Colors.CYAN))
+
+    def _select_attack_type(self, target: str) -> str:
+        """Attack type selection"""
+        print(Colors.colorize("\n[ATTACK TYPES]", Colors.BOLD + Colors.CYAN))
+        print(Colors.colorize("1. SYN Flood (Network Layer)", Colors.GREEN))
+        print(Colors.colorize("2. HTTP Flood (Application Layer)", Colors.GREEN))
+        print(Colors.colorize("3. SSL Flood (Encrypted Attack)", Colors.GREEN))
+    
+        while True:
+            choice = input(Colors.colorize("Select attack type (1-3): ", Colors.BOLD))
+            if choice == '1':
+                return 'syn'
+            elif choice == '2':
+                return 'http'
+            elif choice == '3':
+                return 'ssl'
+            print(Colors.colorize("[!] Invalid choice", Colors.RED))
 
     def run_port_scan(self):
         print(Colors.colorize("\n[PORT SCANNER]", Colors.BOLD + Colors.CYAN))
@@ -128,49 +211,132 @@ class AdvancedNetworkTool:
             print(Colors.colorize(f"[!] Error: {str(e)}", Colors.RED))
 
     def run_ddos_attack(self):
-        print(Colors.colorize("\n[DDoS ATTACK TOOL]", Colors.BOLD + Colors.CYAN))
-        target = self.get_target_input("Masukkan target (IP/Domain): ")
-        port = 80  # Default port
-        
-        if ":" in target:
-            target, port_str = target.split(":")
-            try:
-                port = int(port_str)
-            except ValueError:
-                print(Colors.colorize("[!] Port tidak valid, menggunakan port 80", Colors.YELLOW))
-                port = 80
+        print(Colors.colorize("\n[ADVANCED DDoS TOOL]", Colors.BOLD + Colors.RED))
+        target = self.get_target_input("Masukkan target (IP/Domain - Jangan pakai http:// atau https://): ")
 
-        attack_type = self.ddos_menu(target)
-        if not attack_type:
-            return
+        print(Colors.colorize("[*] Scanning target ports...", Colors.YELLOW))
+        scanner = PortScanner(target)
+        try:
+            open_ports = asyncio.run(scanner.scan_ports(1, 10000))  # Scan more ports
+            if not open_ports:
+                print(Colors.colorize("[!] No open ports found", Colors.RED))
+                return
 
-        threads = self.get_thread_count()
+            print(Colors.colorize("[+] Open ports found:", Colors.GREEN))
+            for i, port in enumerate(open_ports[:20], 1):  # Show first 20 ports
+                print(Colors.colorize(f"{i}. Port {port}", Colors.GREEN))
         
-        print(Colors.colorize(f"\n[!] KONFIRMASI SERANGAN:", Colors.BOLD + Colors.RED))
-        print(Colors.colorize(f"Target: {target}:{port}", Colors.YELLOW))
-        print(Colors.colorize(f"Tipe: {attack_type.upper()} Flood", Colors.YELLOW))
-        print(Colors.colorize(f"Threads: {threads}", Colors.YELLOW))
-        confirm = input(Colors.colorize("Lanjutkan serangan? (y/n): ", Colors.BOLD)).strip().lower()
-        
-        if confirm != 'y':
-            print(Colors.colorize("[*] Serangan dibatalkan", Colors.YELLOW))
-            return
+            port = self._select_port(open_ports)
+            attack_type = self._select_attack_type(target)
+            threads = self._get_thread_count()
+            duration = self._get_duration()
             
-        print(Colors.colorize("\n[!] MEMULAI SERANGAN (Ctrl+C untuk berhenti)", Colors.BOLD + Colors.RED))
-        attacker = DDoSAttacker(target, port, threads)
+
+            print(Colors.colorize("\n[!] ATTACK CONFIGURATION:", Colors.BOLD + Colors.RED))
+            print(Colors.colorize(f"Target: {target}:{port}", Colors.YELLOW))
+            print(Colors.colorize(f"Attack Type: {attack_type.upper()}", Colors.YELLOW))
+            print(Colors.colorize(f"Threads: {threads}", Colors.YELLOW))
+            print(Colors.colorize(f"Duration: {duration} seconds", Colors.YELLOW))
+        
+            if not self._confirm_attack():
+                print(Colors.colorize("[!] Attack canceled", Colors.YELLOW))
+                return
+            
+            print(Colors.colorize("[*] Starting attack...", Colors.YELLOW))
+
+            self._execute_attack(target, port, attack_type, threads, duration)
+
+            attacker = AdvancedDDoSAttacker(target, port, threads)
+            try:
+                attacker.start_attack(attack_type)
+        
+                # Progress display
+                start_time = time.time()
+                while time.time() - start_time < duration:
+                    remaining = int(duration - (time.time() - start_time))
+                    time_left = int(duration - (time.time() - start_time))
+                    print(Colors.colorize(
+                        f"\r[*] Attacking... Time left: {time_left}s | " 
+                        f"Requests: {attacker.stats['total_requests']} | "
+                        f"Success: {attacker.stats['success_requests']}", 
+                        Colors.YELLOW), end='')
+                    time.sleep(1)
+            except KeyboardInterrupt:
+                print(Colors.colorize("\n[!] Attack stopped manually", Colors.YELLOW))
+            finally:
+                stats = attacker.stop_attack()
+                self._show_attack_results(stats)
+
+        except Exception as e:
+            print(Colors.colorize(f"[!] Error: {str(e)}", Colors.RED))
+
+    def _select_port(self, open_ports):
+        """Port selection logic"""
+        while True:
+            try:
+                choice = input(Colors.colorize("Select port to attack (number): ", Colors.BOLD))
+                idx = int(choice) - 1
+                if 0 <= idx < len(open_ports):
+                    return open_ports[idx]
+                print(Colors.colorize("[!] Invalid number", Colors.RED))
+            except ValueError:
+                print(Colors.colorize("[!] Must be a number", Colors.RED))
+
+    def _select_attack_type(self, target):
+        """Attack type selection"""
+        print(Colors.colorize("\n[ATTACK TYPES]", Colors.BOLD + Colors.CYAN))
+        print(Colors.colorize("1. SYN Flood (Network Layer)", Colors.GREEN))
+        print(Colors.colorize("2. HTTP Flood (Application Layer)", Colors.GREEN))
+        print(Colors.colorize("3. SSL Flood (Encrypted Attack)", Colors.GREEN))
+    
+        while True:
+            choice = input(Colors.colorize("Select attack type (1-3): ", Colors.BOLD))
+            if choice == '1':
+                return 'syn'
+            elif choice == '2':
+                return 'http'
+            elif choice == '3':
+                return 'ssl'
+            print(Colors.colorize("[!] Invalid choice", Colors.RED))
+
+    def _execute_attack(self, target, port, attack_type, threads, duration):
+        """Execute the actual attack"""
+        print(Colors.colorize("\n[!] LAUNCHING ATTACK...", Colors.BOLD + Colors.RED))
+    
+        attacker = AdvancedDDoSAttacker(target, port, threads)
         try:
             attacker.start_attack(attack_type)
-            while True:  # Keep main thread alive
-                input(Colors.colorize("\nTekan Enter untuk menghentikan serangan...", Colors.YELLOW))
-                break
+        
+            # Progress display
+            start_time = time.time()
+            while time.time() - start_time < duration:
+                time_left = int(duration - (time.time() - start_time))
+                print(Colors.colorize(
+                    f"\r[*] Attacking... Time left: {time_left}s | " 
+                    f"Requests: {attacker.stats['total_requests']} | "
+                    f"Success: {attacker.stats['success_requests']}", 
+                    Colors.YELLOW), end='')
+                time.sleep(1)
+            
         except KeyboardInterrupt:
-            pass
+            print(Colors.colorize("\n[!] Attack stopped manually", Colors.YELLOW))
         finally:
-            attacker.stop_attack()
+            stats = attacker.stop_attack()
+            self._show_attack_results(stats)
 
+    def _show_attack_results(self, stats):
+        """Display final attack statistics"""
+        print(Colors.colorize("\n[+] ATTACK COMPLETED", Colors.BOLD + Colors.GREEN))
+        print(Colors.colorize(f"Duration: {stats['duration']}", Colors.CYAN))
+        print(Colors.colorize(f"Total Requests: {stats['total_requests']:,}", Colors.CYAN))
+        print(Colors.colorize(f"Successful: {stats['success_requests']:,}", Colors.GREEN))
+        print(Colors.colorize(f"Failed: {stats['failed_requests']:,}", Colors.RED))
+        print(Colors.colorize(f"Requests/sec: {stats['requests_per_sec']:,.1f}", Colors.CYAN))
+        print(Colors.colorize(f"Bandwidth Used: {stats['bandwidth_mb']:.2f} MB", Colors.CYAN))
+    
     def run_packet_sniffer(self):
         print(Colors.colorize("\n[PACKET SNIFFER]", Colors.BOLD + Colors.CYAN))
-        target = self.get_target_input("Masukkan target (IP/Domain): ")
+        target = self.get_target_input("Masukkan target (IP/Domain - Jangan pakai http:// atau https://): ")
         print(Colors.colorize(f"\n[*] Memulai sniffing pada {target}...", Colors.YELLOW))
         
         sniffer = PacketSniffer(target)
