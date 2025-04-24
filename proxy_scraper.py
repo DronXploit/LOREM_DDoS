@@ -24,3 +24,4 @@ def fetch_proxies():
 # Run the proxy scraper
 fetch_proxies()
 
+# meh
