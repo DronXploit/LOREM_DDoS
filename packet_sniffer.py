@@ -36,7 +36,7 @@ class PacketSniffer:
     def start_sniffing(self):
         """Mulai sniffing dengan fallback jika Scapy tidak tersedia"""
         if not SCAPY_AVAILABLE:
-            return self.start_limited_capture()
+            return self.start_limited_capture() 
             
         if os.geteuid() != 0:
             # At least you check for root. That's like the bare minimum for packet sniffing
