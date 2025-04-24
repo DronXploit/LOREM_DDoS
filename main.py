@@ -212,7 +212,7 @@ class AdvancedNetworkTool:
 
     def run_ddos_attack(self):
         print(Colors.colorize("\n[ADVANCED DDoS TOOL]", Colors.BOLD + Colors.RED))
-        target = self.get_target_input("Masukkan target (IP/Domain - Jangan pakai http:// atau https://): ")
+        target = self.get_target_input("Masukkan target (IP/Domain: ")
 
         print(Colors.colorize("[*] Scanning target ports...", Colors.YELLOW))
         scanner = PortScanner(target)
@@ -336,7 +336,7 @@ class AdvancedNetworkTool:
     
     def run_packet_sniffer(self):
         print(Colors.colorize("\n[PACKET SNIFFER]", Colors.BOLD + Colors.CYAN))
-        target = self.get_target_input("Masukkan target (IP/Domain - Jangan pakai http:// atau https://): ")
+        target = self.get_target_input("Masukkan target (IP/Domain: ")
         print(Colors.colorize(f"\n[*] Memulai sniffing pada {target}...", Colors.YELLOW))
         
         sniffer = PacketSniffer(target)
